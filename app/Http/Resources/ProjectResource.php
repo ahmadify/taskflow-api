@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+class ProjectResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,12 +17,12 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'email' => $this->email,
-            'email_verified_at' => $this->email_verified_at,
-            'membership' => $this->whenPivotLoaded('project_user', fn () => [
-                'role' => $this->pivot->role,
-                'joined_at' => $this->pivot->joined_at,
-            ]),
+            'description' => $this->description,
+            'start_date' => $this->start_date?->toDateString(),
+            'due_date' => $this->due_date?->toDateString(),
+            'owner' => new UserResource($this->whenLoaded('owner')),
+            'members' => UserResource::collection($this->whenLoaded('members')),
+            'members_count' => $this->whenCounted('members'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
