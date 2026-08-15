@@ -25,7 +25,7 @@ TaskFlow will support:
 
 ## API scope
 
-Phase 1 defines the domain, relationships, API surface, and implementation standards. The later implementation will expose versioned JSON endpoints under `/api/v1`. It will focus on authentication and CRUD operations for projects, memberships, tasks, assignments, tags, and comments. A web interface, notifications, file attachments, billing, reporting dashboards, and real-time collaboration are outside the initial scope.
+Phase 1 defines the domain, relationships, API surface, and implementation standards. The internship implementation exposes authentication endpoints under `/api`. CRUD operations for projects, memberships, tasks, assignments, tags, and comments remain planned for future development. A web interface, notifications, file attachments, billing, reporting dashboards, and real-time collaboration are outside the scope.
 
 Responses will use a consistent JSON structure. Successful responses will contain a `data` field and may include `message` and `meta` fields. Errors will contain a clear `message` and, for validation failures, an `errors` object keyed by input field. Appropriate HTTP status codes will distinguish successful creation, validation failure, authentication failure, authorization failure, missing resources, and deletion.
 
@@ -55,9 +55,9 @@ Foreign keys and unique composite constraints on pivot pairs will preserve refer
 
 See [docs/ERD.md](docs/ERD.md) for the proposed entity-relationship diagram.
 
-## Planned endpoints
+## Endpoint plan
 
-All endpoints are planned beneath `/api/v1`.
+The authentication endpoints are implemented beneath `/api`; all domain CRUD endpoints in this table remain planned beneath the same prefix.
 
 | Area | Method and path | Purpose |
 | --- | --- | --- |
@@ -96,12 +96,11 @@ List endpoints will use pagination and may support relevant filters, sorting, an
 
 ## Expected deliverables
 
-The completed API is expected to include:
+The internship delivery includes:
 
-- A Laravel application configured for a versioned REST API.
-- Database migrations, Eloquent models, relationships, factories, and seeders for the documented schema.
+- A Laravel application configured as a REST API.
+- Database migrations, Eloquent models, relationships, and factories for the documented schema.
 - Laravel Sanctum registration, login, authenticated-user, and logout flows.
-- Form Requests, policies, concise controllers, API resources, and consistent JSON responses.
-- CRUD endpoints for projects, membership, tasks, assignments, tags, and comments.
-- Feature tests covering authentication, authorization, validation, and core CRUD behavior.
-- API documentation with setup instructions, endpoint behavior, example payloads, and response formats.
+- Form Requests, a concise authentication controller, an API resource, and consistent JSON responses.
+- Feature tests covering authentication, validation, the database schema, constraints, and model relationships.
+- API documentation and a Postman collection that clearly distinguish implemented authentication from planned CRUD functionality.

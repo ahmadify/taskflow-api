@@ -1,0 +1,737 @@
+{
+  "info": {
+    "_postman_id": "ff38a499-8624-4615-87ec-fb783cf0987f",
+    "name": "TaskFlow API",
+    "description": "Authentication requests are implemented in the current internship scope. Project, membership, task, assignment, tag, and comment requests are planning references only.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('registration_name')) {",
+          "    pm.collectionVariables.set('registration_name', pm.variables.replaceIn('{{$randomFullName}}'));",
+          "}",
+          "if (!pm.collectionVariables.get('registration_email')) {",
+          "    pm.collectionVariables.set('registration_email', pm.variables.replaceIn('{{$randomEmail}}'));",
+          "}",
+          "if (!pm.collectionVariables.get('registration_password')) {",
+          "    pm.collectionVariables.set('registration_password', pm.variables.replaceIn('{{$randomUUID}}'));",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "registration_name",
+      "value": ""
+    },
+    {
+      "key": "registration_email",
+      "value": ""
+    },
+    {
+      "key": "registration_password",
+      "value": "",
+      "type": "secret"
+    }
+  ],
+  "item": [
+    {
+      "name": "Implemented Authentication",
+      "description": "These requests match the four routes implemented by the Laravel application.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{registration_name}}\",\n  \"email\": \"{{registration_email}}\",\n  \"password\": \"{{registration_password}}\",\n  \"password_confirmation\": \"{{registration_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/api/register",
+            "description": "Registers a user, returns HTTP 201 with data.user and data.token, and stores the token and user ID in the selected environment. Temporary registration values are generated at runtime."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('Registration response contains the user and bearer token', function () {",
+                  "    pm.expect(json.message).to.eql('Registration successful.');",
+                  "    pm.expect(json).to.have.nested.property('data.user.id');",
+                  "    pm.expect(json).to.have.nested.property('data.user.name');",
+                  "    pm.expect(json).to.have.nested.property('data.user.email');",
+                  "    pm.expect(json).to.have.nested.property('data.token');",
+                  "    pm.expect(json.data.token_type).to.eql('Bearer');",
+                  "});",
+                  "if (pm.response.code === 201 && json.data && json.data.token) {",
+                  "    pm.environment.set('token', json.data.token);",
+                  "    pm.environment.set('user_id', json.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{registration_email}}\",\n  \"password\": \"{{registration_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/api/login",
+            "description": "Authenticates the registered collection user, returns HTTP 200 with data.user and data.token, and stores the token and user ID in the selected environment."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('Login response contains the user and bearer token', function () {",
+                  "    pm.expect(json.message).to.eql('Login successful.');",
+                  "    pm.expect(json).to.have.nested.property('data.user.id');",
+                  "    pm.expect(json).to.have.nested.property('data.user.email');",
+                  "    pm.expect(json).to.have.nested.property('data.token');",
+                  "    pm.expect(json.data.token_type).to.eql('Bearer');",
+                  "});",
+                  "if (pm.response.code === 200 && json.data && json.data.token) {",
+                  "    pm.environment.set('token', json.data.token);",
+                  "    pm.environment.set('user_id', json.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/user",
+            "description": "Returns HTTP 200 with data.user for the current Sanctum bearer token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('Response contains a safe user resource', function () {",
+                  "    pm.expect(json).to.have.nested.property('data.user.id');",
+                  "    pm.expect(json).to.have.nested.property('data.user.name');",
+                  "    pm.expect(json).to.have.nested.property('data.user.email');",
+                  "    pm.expect(json.data.user).not.to.have.property('password');",
+                  "    pm.expect(json.data.user).not.to.have.property('remember_token');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/logout",
+            "description": "Revokes only the Sanctum token used for this request and returns HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('Logout response has the expected structure', function () {",
+                  "    pm.expect(json.message).to.eql('Logout successful.');",
+                  "    pm.expect(json.data).to.eql(null);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set('token', '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Validation Examples",
+      "description": "Negative examples for implemented authentication validation and protection behavior.",
+      "item": [
+        {
+          "name": "Registration with missing fields",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/api/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 422', function () { pm.response.to.have.status(422); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Required fields are reported', function () {",
+                  "    pm.expect(json).to.have.property('message');",
+                  "    pm.expect(json.errors).to.have.all.keys('name', 'email', 'password', 'password_confirmation');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registration with invalid email",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{registration_name}}\",\n  \"email\": \"invalid-email\",\n  \"password\": \"{{registration_password}}\",\n  \"password_confirmation\": \"{{registration_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/api/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 422', function () { pm.response.to.have.status(422); });",
+                  "pm.test('Email validation error is returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.nested.property('errors.email');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registration with unmatched password confirmation",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{registration_name}}\",\n  \"email\": \"{{registration_email}}\",\n  \"password\": \"{{registration_password}}\",\n  \"password_confirmation\": \"unmatched-{{registration_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/api/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 422', function () { pm.response.to.have.status(422); });",
+                  "pm.test('Password confirmation error is returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.nested.property('errors.password');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login with incorrect credentials",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{registration_email}}\",\n  \"password\": \"{{$randomUUID}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/api/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Credential failure is generic', function () {",
+                  "    pm.expect(json.message).to.eql('The provided credentials are incorrect.');",
+                  "    pm.expect(json.data).to.eql(null);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current User without a token",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/user"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Unauthenticated message is returned', function () {",
+                  "    pm.expect(pm.response.json().message).to.eql('Unauthenticated.');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Planned CRUD APIs",
+      "description": "Planning references only. None of these requests has a backend route in the current internship scope.",
+      "item": [
+        {
+          "name": "Projects",
+          "item": [
+            {
+              "name": "[Planned] List Projects",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{base_url}}/api/projects",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Create Project",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Project name\",\n  \"description\": \"Project description\",\n  \"start_date\": \"2026-09-01\",\n  \"due_date\": \"2026-12-01\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/projects",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] View Project",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Update Project",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated project name\",\n  \"description\": \"Updated project description\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/projects/{{project_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Delete Project",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Project Membership",
+          "item": [
+            {
+              "name": "[Planned] Add Project Member",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"role\": \"member\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/projects/{{project_id}}/members",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Remove Project Member",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}/members/{{user_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tasks",
+          "item": [
+            {
+              "name": "[Planned] List Project Tasks",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Create Task",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Task title\",\n  \"description\": \"Task description\",\n  \"status\": \"todo\",\n  \"priority\": \"medium\",\n  \"due_date\": \"2026-10-01\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] View Task",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Update Task",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Updated task title\",\n  \"status\": \"in_progress\",\n  \"priority\": \"high\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Delete Task",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Task Assignments",
+          "item": [
+            {
+              "name": "[Planned] Assign Task User",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"user_id\": \"{{user_id}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}/assignees",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Remove Task User",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}/assignees/{{user_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tags",
+          "item": [
+            {
+              "name": "[Planned] List Tags",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{base_url}}/api/tags",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Create Tag",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"project_id\": \"{{project_id}}\",\n  \"name\": \"Tag name\",\n  \"color\": \"#336699\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/tags",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Attach Task Tag",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tag_id\": \"{{tag_id}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}/tags",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Detach Task Tag",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}/tags/{{tag_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Comments",
+          "item": [
+            {
+              "name": "[Planned] List Task Comments",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}/comments",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Create Comment",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"body\": \"Comment body\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}/comments",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Update Comment",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"body\": \"Updated comment body\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}/comments/{{comment_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            },
+            {
+              "name": "[Planned] Delete Comment",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{base_url}}/api/projects/{{project_id}}/tasks/{{task_id}}/comments/{{comment_id}}",
+                "description": "Planned endpoint — not implemented in the current internship scope."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
