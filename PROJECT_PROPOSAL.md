@@ -1,106 +1,50 @@
 # TaskFlow Project Proposal
 
-## Problem
+## Overview and problem
 
-Small teams often coordinate projects across disconnected messages, notes, and spreadsheets. This makes ownership unclear, hides progress, and makes it difficult to find the discussion or context behind a task. TaskFlow will provide one REST API for organizing project membership, task assignments, tags, and comments.
+Small teams often manage their work through separate messages, notes, and spreadsheets. This makes it difficult to know who is responsible for each task, which work is finished, and where important discussions took place. Information can be repeated, lost, or become outdated.
 
-## Objective and users
+TaskFlow is a Laravel REST API designed to keep project information in one structured system. It provides the foundation for managing projects, members, tasks, assignments, tags, and comments. Client applications can use the API to access this information in a consistent JSON format.
 
-The objective is to build a secure Laravel REST API that gives registered users a consistent way to manage collaborative project work. Its intended users are project owners, project members, and client applications that need structured project-management data.
+## Objective and intended users
 
-Project owners will create projects and manage membership. Project members will view the projects they belong to, create and update tasks when authorized, assign work, apply tags, and discuss tasks through comments.
+The objective is to create a secure and organized backend for collaborative project management. The main users are registered team members, project owners, and developers building applications that use TaskFlow data.
 
-## Core functionality
+Project owners will be responsible for their projects and membership. Project members will be able to take part in shared work, receive task assignments, use tags, and discuss tasks through comments when the related features are implemented.
 
-TaskFlow will support:
+## Main functionality
 
-- User registration, login, logout, and retrieval of the authenticated user.
-- Project creation, viewing, updating, and deletion.
-- Project membership management with an `owner` or `member` role and a recorded join date.
-- Task creation within a project, including status, priority, due date, and creator details.
-- Assignment of one or more project members to a task.
-- Project-level tags that can be attached to multiple tasks.
-- Task comments written by authenticated project members.
-- Authorization rules that restrict data and actions to appropriate project members or owners.
+The current internship version focuses on user authentication. A user can register, log in, view their authenticated account, and log out. Registration and login return a personal access token that can be used for protected requests.
 
-## API scope
-
-Phase 1 defines the domain, relationships, API surface, and implementation standards. The internship implementation exposes authentication endpoints under `/api`. CRUD operations for projects, memberships, tasks, assignments, tags, and comments remain planned for future development. A web interface, notifications, file attachments, billing, reporting dashboards, and real-time collaboration are outside the scope.
-
-Responses will use a consistent JSON structure. Successful responses will contain a `data` field and may include `message` and `meta` fields. Errors will contain a clear `message` and, for validation failures, an `errors` object keyed by input field. Appropriate HTTP status codes will distinguish successful creation, validation failure, authentication failure, authorization failure, missing resources, and deletion.
-
-## Authentication and authorization
-
-Laravel Sanctum will provide token authentication. Users will register or log in to receive a personal access token, send it in the `Authorization: Bearer <token>` header, and revoke the current token on logout.
-
-Policies and project membership checks will protect resources. Project owners will control project details and membership. Project members will only access projects and related resources when they have membership. Assignment targets must belong to the same project as the task, and tags used by a task must belong to that task's project. Comment actions will be limited to authorized project members, with update and deletion restricted to the comment author unless a defined owner privilege applies.
-
-## Validation
-
-Laravel Form Request classes will validate all write operations. Validation will cover required fields, string lengths, enum-like values, dates, uniqueness where needed, resource existence, and cross-resource rules. Examples include ensuring a due date is valid, a project role is supported, an assignee belongs to the project, and a tag belongs to the same project as the task. Controllers will remain concise by delegating validation, authorization, and domain-specific logic to the appropriate framework classes and services.
+The wider TaskFlow design also includes project creation, project membership, tasks, task assignments, tags, and comments. These features are represented in the database structure and Eloquent model relationships. Their CRUD endpoints are planned for future development and are not implemented in the current version.
 
 ## Database design
 
-The relational database will contain `users`, `projects`, `tasks`, `tags`, and `comments`, together with three many-to-many pivot tables.
+TaskFlow uses SQLite for local development. Its main database entities are `users`, `projects`, `tasks`, `tags`, and `comments`.
 
-- `projects.owner_id` identifies the user responsible for a project.
-- `project_user` connects users and projects and stores each member's role and `joined_at` date.
-- `tasks.project_id` scopes every task to one project, while `created_by` records its creator.
-- `task_user` allows a task to have multiple assignees and a user to have multiple assignments.
-- `tags.project_id` scopes reusable tags to a project.
-- `task_tag` connects tasks and tags.
-- `comments` belong to both a task and their authoring user.
+A project belongs to an owner. The `project_user` pivot table connects projects and their members while recording each member's role and join date. Each task belongs to a project and records the user who created it. The `task_user` pivot table supports assigning several users to a task.
 
-Foreign keys and unique composite constraints on pivot pairs will preserve referential integrity and prevent duplicate memberships, assignments, and tag attachments. Indexes will support common filters such as project, status, priority, due date, assignee, and task comments. Timestamps will support auditing and ordering; soft deletion can be evaluated during implementation for records where recovery is useful.
+Tags belong to projects and can be connected to tasks through the `task_tag` pivot table. Comments belong to both a task and the user who wrote them. Foreign keys protect these relationships, while unique constraints prevent duplicate memberships, assignments, and tag attachments. The complete relationships and cardinalities are shown in [docs/ERD.md](docs/ERD.md).
 
-See [docs/ERD.md](docs/ERD.md) for the proposed entity-relationship diagram.
+## Authentication and implemented endpoints
 
-## Endpoint plan
+TaskFlow uses Laravel Sanctum for token authentication. Passwords are securely hashed before storage. Registration validates the user's name, email address, password, and password confirmation. Login checks the submitted credentials without exposing sensitive account information.
 
-The authentication endpoints are implemented beneath `/api`; all domain CRUD endpoints in this table remain planned beneath the same prefix.
+The implemented endpoints are:
 
-| Area | Method and path | Purpose |
-| --- | --- | --- |
-| Authentication | `POST /register` | Register a user and issue a token |
-| Authentication | `POST /login` | Authenticate a user and issue a token |
-| Authentication | `POST /logout` | Revoke the current token |
-| Authentication | `GET /user` | Return the authenticated user |
-| Projects | `GET /projects` | List projects available to the user |
-| Projects | `POST /projects` | Create a project |
-| Projects | `GET /projects/{project}` | View a project |
-| Projects | `PATCH /projects/{project}` | Update a project |
-| Projects | `DELETE /projects/{project}` | Delete a project |
-| Members | `GET /projects/{project}/members` | List project members |
-| Members | `POST /projects/{project}/members` | Add a project member |
-| Members | `PATCH /projects/{project}/members/{user}` | Change a member role |
-| Members | `DELETE /projects/{project}/members/{user}` | Remove a project member |
-| Tasks | `GET /projects/{project}/tasks` | List and filter project tasks |
-| Tasks | `POST /projects/{project}/tasks` | Create a task |
-| Tasks | `GET /tasks/{task}` | View a task |
-| Tasks | `PATCH /tasks/{task}` | Update a task |
-| Tasks | `DELETE /tasks/{task}` | Delete a task |
-| Assignments | `POST /tasks/{task}/assignees` | Assign one or more project members |
-| Assignments | `DELETE /tasks/{task}/assignees/{user}` | Remove an assignee |
-| Tags | `GET /projects/{project}/tags` | List project tags |
-| Tags | `POST /projects/{project}/tags` | Create a tag |
-| Tags | `PATCH /tags/{tag}` | Update a tag |
-| Tags | `DELETE /tags/{tag}` | Delete a tag |
-| Task tags | `POST /tasks/{task}/tags` | Attach one or more project tags |
-| Task tags | `DELETE /tasks/{task}/tags/{tag}` | Detach a tag |
-| Comments | `GET /tasks/{task}/comments` | List task comments |
-| Comments | `POST /tasks/{task}/comments` | Create a comment |
-| Comments | `PATCH /comments/{comment}` | Update a comment |
-| Comments | `DELETE /comments/{comment}` | Delete a comment |
+- `POST /api/register` to create a user and issue a token.
+- `POST /api/login` to authenticate a user and issue a token.
+- `GET /api/user` to return the authenticated user.
+- `POST /api/logout` to revoke the token used for the current request.
 
-List endpoints will use pagination and may support relevant filters, sorting, and relationship inclusion without exposing data outside the authenticated user's projects.
+The current-user and logout endpoints require a valid bearer token. Automated tests cover successful requests, validation errors, incorrect credentials, protected access, and token revocation.
 
-## Expected deliverables
+## Planned CRUD features
 
-The internship delivery includes:
+Future development may add CRUD endpoints for projects and tasks, together with project membership management. It may also support assigning project members to tasks, creating and attaching project tags, and adding or managing task comments. Access rules should ensure that users only work with projects they own or belong to.
 
-- A Laravel application configured as a REST API.
-- Database migrations, Eloquent models, relationships, and factories for the documented schema.
-- Laravel Sanctum registration, login, authenticated-user, and logout flows.
-- Form Requests, a concise authentication controller, an API resource, and consistent JSON responses.
-- Feature tests covering authentication, validation, the database schema, constraints, and model relationships.
-- API documentation and a Postman collection that clearly distinguish implemented authentication from planned CRUD functionality.
+These planned endpoints are documented separately in [docs/API_PLAN.md](docs/API_PLAN.md) and included as clearly marked planning examples in the Postman collection. They are outside the current internship implementation.
+
+## Expected outcome
+
+The delivered project provides a working Laravel API, a tested authentication flow, a complete relational database foundation, setup documentation, and Postman examples. It can serve as a clear starting point for future project-management features without presenting planned functionality as completed work.
