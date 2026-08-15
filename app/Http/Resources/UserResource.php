@@ -19,10 +19,6 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'email_verified_at' => $this->email_verified_at,
-            'membership' => $this->whenPivotLoaded('project_user', fn () => [
-                'role' => $this->pivot->role,
-                'joined_at' => $this->pivot->joined_at,
-            ]),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
