@@ -23,9 +23,6 @@ class UserResource extends JsonResource
                 'role' => $this->pivot->role,
                 'joined_at' => $this->pivot->joined_at,
             ]),
-            'assignment' => $this->whenPivotLoaded('task_user', fn () => [
-                'assigned_at' => $this->pivot->assigned_at,
-            ]),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
