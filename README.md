@@ -1,8 +1,8 @@
 # TaskFlow API
 
-TaskFlow is a planned Laravel REST API for collaborative project management. Registered users will be able to create projects, manage project membership, create and assign tasks, organize tasks with reusable tags, and discuss work through comments.
+TaskFlow is a Laravel REST API for collaborative project management. Registered users can create projects, manage project membership, create and assign tasks, organize tasks with reusable tags, and discuss work through comments.
 
-The Laravel 13 application is scaffolded as an API-only backend. It uses SQLite for local development and Laravel Sanctum for token authentication. TaskFlow domain resources and CRUD endpoints are planned for a later phase.
+The Laravel 13 application is an API-only backend using SQLite for local development and Laravel Sanctum for token authentication. Authentication, project membership, task management, assignments, tags, and comments are implemented.
 
 ## Documentation
 
@@ -11,7 +11,7 @@ The Laravel 13 application is scaffolded as an API-only backend. It uses SQLite 
 
 ## Technical direction
 
-The API uses Laravel Sanctum for token authentication and will use Form Request classes for validation, policies for authorization, API resources for consistent JSON responses, and feature tests for authentication and CRUD behavior. The planned API namespace is `/api/v1`.
+The API uses Laravel Sanctum for token authentication, Form Request classes for validation, policies for authorization, API resources for consistent JSON responses, and feature tests for authentication and CRUD behavior.
 
 ## Windows setup and local use
 
@@ -40,3 +40,5 @@ php artisan test
 ```
 
 Node.js and frontend tooling are not required for the API workflow.
+
+Global tag updates and deletion are deferred until a broader tag lifecycle is defined. The current API limits global tag operations to authorized listing and project-owner creation; task-level attachment and detachment remain project-scoped.

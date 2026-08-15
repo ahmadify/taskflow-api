@@ -64,4 +64,11 @@ class Task extends Model
             'completed_at' => 'datetime',
         ];
     }
+
+    protected function childRouteBindingRelationshipName($childType)
+    {
+        return $childType === 'user'
+            ? 'assignees'
+            : parent::childRouteBindingRelationshipName($childType);
+    }
 }
